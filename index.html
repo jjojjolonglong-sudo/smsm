@@ -165,7 +165,7 @@ const I=new Map,BY={},mk=(id,lv,f,key,src)=>{const i={key,id,lv,f,mt:[],src};I.s
 B.forEach(n=>mk(n.id,n.lv,n.f,n.id));
 const dn=new Set;
 for(const n of[...B.values()]){const a=I.get(n.id);for(const q of C[n.id]||[]){const qb=B.get(q);
-if(qb){if(n.dr&&qb.dr){if(!dn.has(q+n.id)){dn.add(n.id+q);mate(a,I.get(q))}}
+if(qb){if(n.dr&&qb.dr&&n.lv==qb.lv){if(!dn.has(q+n.id)){dn.add(n.id+q);mate(a,I.get(q))}}
 else if(n.deg<qb.deg||n.deg==qb.deg&&n.id<q)mate(a,mk(q,n.lv,n.f,q+'@'+n.id));   /* 근친혼: 배우자 자리에 중복 카드 */
 continue}
 const b=mk(q,n.lv,n.f,q+'@'+n.id);mate(a,b);if(n.f)continue;const x=byId('sim',q);
