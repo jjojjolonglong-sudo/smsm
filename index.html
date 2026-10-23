@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>smsm</title>
+<link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#f7f7f5" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#161816" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="smsm">
+<style>
+:root{--bg:#f7f7f5;--fg:#222;--mut:#8a8a85;--ln:#dcdcd6;--ac:#2f8f5b;--card:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#161816;--fg:#e6e6e2;--mut:#8a8a85;--ln:#2e312e;--ac:#5fc68a;--card:#1d201d}}
+*{box-sizing:border-box;border-radius:0}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button,input,select,textarea{font:inherit;color:inherit;background:var(--card);border:1px solid var(--ln);padding:6px 10px}
+button{cursor:pointer}button:hover{border-color:var(--fg)}
+button.pri{background:var(--fg);color:var(--bg);border-color:var(--fg)}button.danger{color:#c0392b}
+input,select,textarea{width:100%}
+a{color:var(--ac);cursor:pointer}hr{border:0;border-top:1px solid var(--ln);margin:16px 0}
+.mut{color:var(--mut)}.err{color:#c0392b}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--ln);padding:8px 14px}
+header .top{display:flex;gap:6px;max-width:900px;margin:auto}header select{flex:1}
+nav{display:flex;max-width:900px;margin:8px auto 0}
+nav button{flex:1;border:0;border-bottom:2px solid transparent;background:none}
+nav button.on{border-color:var(--ac);color:var(--ac)}
+main{max-width:900px;margin:auto;padding:14px}
+.bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px}
+.g.w{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.c{cursor:pointer}.im{aspect-ratio:3/4;background:var(--ln);overflow:hidden}.im.w{aspect-ratio:16/9}
+.im img{width:100%;height:100%;object-fit:cover;display:block}
+.row{padding:10px 0;border-bottom:1px solid var(--ln);cursor:pointer}
+.big{display:flex;gap:16px;align-items:flex-start}.big .im{width:120px;flex:none}
+dialog{border:1px solid var(--ln);background:var(--bg);color:var(--fg);padding:16px;width:min(440px,92vw);max-height:90vh}
+dialog::backdrop{background:#0007}dialog img#vi{width:100%;display:block;max-height:70vh;object-fit:contain}
+dialog h3{margin:0 0 6px}label{display:block;margin:10px 0 2px;color:var(--mut);font-size:12px}
+.chk{display:flex;gap:8px;align-items:center;color:var(--fg);font-size:14px;margin:4px 0}.chk input{width:auto}
+.ms{display:flex;flex-wrap:wrap;gap:0 14px}.pv{width:120px;margin-top:6px}.pv.w{width:200px}.pv:empty{display:none}
+.lg{max-width:300px;margin:25vh auto;display:grid;gap:8px;padding:0 14px}
+</style></head><body>
+<div id="app"></div><dialog id="dg"></dialog><dialog id="vw"></dialog>
+<script src="https://jjojjolonglong-sudo.github.io/mnmn/media.js"></script>
+<script>
+const SB='https://rtvvajhsnwkkrmncyfbs.supabase.co',ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0dnZhamhzbndra3JtbmN5ZmJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NjkwMTEsImV4cCI6MjEwNzA0NTAxMX0.O2aLLeazv_FhUhbVAkp4vz3pw8GPb_683dUu7Et1Cwk';
+const TB={play:'smsm_play',lifetime:'smsm_lifetime',sim:'smsm_sim',rel:'smsm_relation',profile:'smsm_profile',album:'smsm_album'};
+const $=s=>document.querySelector(s),E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* media.js 를 못 불러와도 앱이 죽지 않게 */
+if(!window.Media){const f=async()=>{throw new Error('media.js를 불러오지 못했어요')};window.Media={init(){},url:()=>'',img:()=>'',newId:()=>crypto.randomUUID(),folder:{supported:false,name:async()=>''},save:f,sync:f}}
+/* ---- 로그인 / REST ---- */
+const SES=()=>{try{return JSON.parse(localStorage.getItem('smsm_sb')||'null')}catch(e){return null}},setSES=s=>{try{s?localStorage.setItem('smsm_sb',JSON.stringify(s)):localStorage.removeItem('smsm_sb')}catch(e){}};
+async function gotrue(g,b){const r=await fetch(`${SB}/auth/v1/token?grant_type=${g}`,{method:'POST',headers:{apikey:ANON,'Content-Type':'application/json'},body:JSON.stringify(b)}),j=await r.json();if(!r.ok)throw new Error(j.error_description||j.msg||j.error||'HTTP '+r.status);const s={access_token:j.access_token,refresh_token:j.refresh_token,expires_at:Date.now()+(j.expires_in||3600)*1000,user:{id:j.user&&j.user.id,email:j.user&&j.user.email}};setSES(s);return s}
+let rfp=null;async function token(){let s=SES();if(!s)throw new Error('로그인이 필요해요');if(s.expires_at-Date.now()<60000){rfp=rfp||gotrue('refresh_token',{refresh_token:s.refresh_token}).finally(()=>rfp=null);s=await rfp}return s.access_token}
+Media.init({getToken:token});
+async function rest(p,o={}){const go=async()=>fetch(`${SB}/rest/v1/${p}`,{...o,headers:{apikey:ANON,Authorization:'Bearer '+await token(),'Content-Type':'application/json',...(o.headers||{})}});let r=await go();if(r.status==401){const s=SES();if(s){await gotrue('refresh_token',{refresh_token:s.refresh_token});r=await go()}}if(!r.ok){let m;try{const j=await r.json();m=j.message||JSON.stringify(j)}catch(e){m='HTTP '+r.status}throw new Error(m)}return r}
+/* ---- 데이터 ---- */
+let D={},S={tab:'sim',sim:null,fs:'',play:''},FN='',RM=null;const nid=()=>crypto.randomUUID();
+const LSget=k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}};
+async function all(t){let o=[],off=0,j;do{j=await(await rest(`${t}?select=*&order=created_at,id&limit=1000&offset=${off}`)).json();o=o.concat(j);off+=1000}while(j.length==1000);return o}
+async function load(){const ks=Object.keys(TB),r=await Promise.all(ks.map(k=>all(TB[k])));ks.forEach((k,i)=>D[k]=r[i])}
+async function put(k,rows){rows=[].concat(rows).map(({created_at,user_id,...r})=>r);await rest(TB[k]+'?on_conflict=id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(rows)});rows.forEach(r=>{const x=byId(k,r.id);x?Object.assign(x,r):D[k].push(r)})}
+async function rm(k,id){await rest(`${TB[k]}?id=eq.${id}`,{method:'DELETE'});await load()}
+const byId=(k,id)=>D[k].find(x=>x.id==id),curP=()=>byId('play',S.play),sims=()=>D.sim.filter(s=>s.play==S.play);
+const nm=s=>[s.first_name,s.family_name].filter(Boolean).join(' ')||'(이름 없음)';
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+/* ---- 수명 단계 / 나이 ---- */
+const ST=['baby','infant','toddler','child','teen','young_adult','adult','elder','ghost'],KO=['아기','영아','유아','어린이','청소년','청년','중년','노년','유령'];
+const DEF={baby:3,infant:3,toddler:5,child:7,teen:7,young_adult:14,adult:14,elder:14,ghost:14};
+const SO={bestie:'단짝',friend:'친구',ex:'전애인',old_friend:'옛친구'};
+/* 기준 심이 있으면 기준 출생일 + 차이, 없으면 '시작 시점 나이'만큼 이전에 태어난 것으로 계산 */
+const birth=(s,seen=new Set)=>{if(seen.has(s.id))return 0;seen.add(s.id);const b=s.birth_stand&&byId('sim',s.birth_stand);return b?birth(b,seen)+(s.birth_gap||0):-(s.birth_gap||0)};
+function stI(s){const p=byId('play',s.play),lt=D.lifetime.find(l=>l.play==s.play);if(!p||!lt)return -1;const age=p.today-birth(s);if(age<0)return -1;let a=0;for(let i=0;i<8;i++){a+=lt[ST[i]];if(age<a)return i}return 8}
+const stl=s=>{const i=stI(s),p=byId('play',s.play);return i<0?'출생 전':`${KO[i]} · ${p.today-birth(s)}일`};
+const thumb=s=>{const p=D.profile.filter(x=>x.sim==s.id&&x.type=='formal').sort((a,b)=>ST.indexOf(a.stage)-ST.indexOf(b.stage)||(a.created_at||'~').localeCompare(b.created_at||'~'));return p.length?p[p.length-1].profile:''};
+const IM=h=>h?Media.img(h,'onerror="this.remove()"'):'';
+/* ---- 혈연 (4촌까지): 공통 조상까지의 세대 합 ---- */
+function anc(id){const m=new Map([[id,0]]);let f=[id],d=0;while(f.length&&d<4){d++;const n=[];for(const x of f){const s=byId('sim',x);if(!s)continue;for(const p of[s.father,s.mother])if(p&&!m.has(p)){m.set(p,d);n.push(p)}}f=n}return m}
+async function sync(){const ss=sims(),A=Object.fromEntries(ss.map(s=>[s.id,anc(s.id)])),up=[];
+for(const a of ss)for(const b of ss){if(a==b)continue;let d=null;for(const[k,x]of A[a.id]){const y=A[b.id].get(k);if(y!=null&&x+y<=4&&(d==null||x+y<d))d=x+y}
+const r=D.rel.find(r=>r.sim1==a.id&&r.sim2==b.id);
+if(r){if((r.blood??null)!==d)up.push({...r,blood:d})}else if(d)up.push({id:nid(),sim1:a.id,sim2:b.id,blood:d,marry:false,friendly:true,social:null,comment:null})}
+if(up.length)await put('rel',up)}
+/* ---- 폼 ---- */
+function fld(f,v){const k=f.k,l=`<label>${f.l}</label>`,V=E(v??'');
+switch(f.t){case'c':return`<label class=chk><input type=checkbox name=${k} ${v?'checked':''}>${f.l}</label>`;
+case's':return l+`<select name=${k}>${f.o.map(([a,b])=>`<option value="${a}" ${a==(v??'')?'selected':''}>${E(b)}</option>`).join('')}</select>`;
+case'm':return l+`<div class=ms>${sims().map(s=>`<label class=chk><input type=checkbox name=${k} value=${s.id} ${(v||[]).includes(s.id)?'checked':''}>${E(nm(s))}</label>`).join('')}</div>`;
+case'p':return l+`<input type=file name=${k} accept="image/*"><div class="im pv${f.w?' w':''}">${IM(v)}</div>`;
+case'a':return l+`<textarea name=${k} rows=3>${V}</textarea>`;
+default:return l+`<input name=${k} type=${{n:'number',d:'date'}[f.t]||'text'} value="${V}">`}}
+function collect(f,fs){const o={};for(const x of fs){if(x.t=='p')continue;const e=f.elements[x.k];o[x.k]=x.t=='c'?e.checked:x.t=='m'?[...f.querySelectorAll(`[name=${x.k}]:checked`)].map(i=>i.value):x.t=='n'?(e.value===''?null:+e.value):(e.value===''?null:e.value)}return o}
+function modal(title,fs,v,save,del){const d=$('#dg');RM=del;
+d.innerHTML=`<form id=fm><h3>${title}</h3>${fs.map(f=>fld(f,v[f.k])).join('')}<p id=er class=err></p><div class=bar><button type=button data-a=x>취소</button>${del?'<button type=button class=danger data-a=rm>삭제</button>':''}<button class=pri>저장</button></div></form>`;d.showModal();
+$('#fm').onsubmit=async e=>{e.preventDefault();$('#er').textContent='저장 중…';try{await save(collect($('#fm'),fs),$('#fm'));d.close();render()}catch(x){$('#er').textContent=x.message}}}
+$('#dg').addEventListener('change',e=>{if(e.target.type=='file'){const f=e.target.files[0];e.target.nextElementSibling.innerHTML=f?`<img src="${URL.createObjectURL(f)}">`:''}});
+/* 이미지 저장: 세로 200px WebP 한 장, DB에는 해시만. id를 주면 원본도 보관(PC 폴더 또는 서버 inbox) */
+async function up(file,id){const s=await Media.save(file,id?{id}:{});const h=s.hash,o=s.original,er=s.originalError;s.close();if(o=='failed')alert('이미지는 저장됐지만 원본 보관에 실패했어요: '+er);return h}
+const simOpts=(ex,blank=true)=>[...(blank?[['','—']]:[]),...sims().filter(s=>s.id!=ex).map(s=>[s.id,nm(s)])];
+function playForm(p){const v={type:'clean',start_date:today(),today:0,...(p||{})},lt=p&&D.lifetime.find(l=>l.play==p.id);ST.forEach(k=>v['lt_'+k]=lt?lt[k]:DEF[k]);
+modal(p?'플레이 수정':'새 플레이',[{k:'type',l:'종류',t:'s',o:[['clean','clean'],['dirty','dirty']]},{k:'goal',l:'골 (한 줄)',t:'t'},{k:'start_date',l:'시작일',t:'d'},{k:'end_date',l:'종료일',t:'d'},{k:'today',l:'현재 플레이 일수',t:'n'},...ST.map((k,i)=>({k:'lt_'+k,l:`수명(일) · ${KO[i]}`,t:'n'}))],v,async o=>{
+const pid=p?p.id:nid(),l0=p&&D.lifetime.find(l=>l.play==pid);
+await put('play',{id:pid,type:o.type||'clean',goal:o.goal,start_date:o.start_date,end_date:o.end_date,today:o.today??0});
+await put('lifetime',{id:l0?l0.id:nid(),play:pid,...Object.fromEntries(ST.map(k=>[k,o['lt_'+k]??DEF[k]]))});S.play=pid;try{localStorage.setItem('smsm_play',pid)}catch(e){}},
+p?async()=>{await rm('play',p.id);S.play=''}:null)}
+function simForm(s){const id=s?s.id:nid(),v=s||{sex:'womb',birth_gap:0},o=simOpts(id);
+modal(s?'심 수정':'새 심',[{k:'first_name',l:'이름',t:'t'},{k:'family_name',l:'성',t:'t'},{k:'sex',l:'성별',t:'s',o:[['womb','womb'],['testis','testis']]},{k:'father',l:'아버지',t:'s',o},{k:'mother',l:'어머니',t:'s',o},{k:'partner',l:'파트너',t:'s',o},{k:'birth_stand',l:'나이 기준 심 (없으면 시작 시점 나이를 아래에)',t:'s',o},{k:'birth_gap',l:'나이 차(일). 기준 심이 더 위면 +',t:'n'}],v,async x=>{
+await put('sim',{id,play:S.play,...x,sex:x.sex||'womb',birth_gap:x.birth_gap??0});
+if(x.partner){const q=byId('sim',x.partner);if(q&&q.partner!=id)await put('sim',{...q,partner:id})}
+S.sim=id;await sync()},s?async()=>{await rm('sim',id);S.sim=null;await sync()}:null)}
+function profForm(x,sim){const id=x?x.id:nid(),v=x||{type:'formal',stage:ST[Math.max(0,Math.min(7,stI(sim)))]};
+modal(x?'프로필 수정':'프로필 추가',[{k:'profile',l:'사진',t:'p'},{k:'type',l:'종류',t:'s',o:[['formal','포멀 (대표 썸네일 후보)'],['informal','인포멀']]},{k:'stage',l:'수명 단계',t:'s',o:ST.map((k,i)=>[k,KO[i]])}],v,async(o,f)=>{
+const file=f.elements.profile.files[0];let h=x&&x.profile;if(file)h=await up(file);if(!h)throw new Error('사진을 선택하세요');
+await put('profile',{id,sim:sim.id,profile:h,type:o.type,stage:o.stage})},x?()=>rm('profile',id):null)}
+function albForm(a){const id=a?a.id:nid(),v=a||{sims:S.fs?[S.fs]:[]};
+modal(a?'스샷 수정':'스샷 추가',[{k:'photo',l:'사진 (원본은 연결된 폴더에 보관)',t:'p',w:1},{k:'sims',l:'관련 심',t:'m'}],v,async(o,f)=>{
+const file=f.elements.photo.files[0];let h=a&&a.photo;if(file)h=await up(file,id);if(!h)throw new Error('사진을 선택하세요');
+await put('album',{id,play:S.play,photo:h,sims:o.sims})},a?()=>rm('album',id):null)}
+function relForm(r){const id=r?r.id:nid(),o=simOpts('',false),v=r||{sim1:S.fs||(o[0]||[])[0],friendly:true};
+modal(r?'관계 수정':'관계 추가',[{k:'sim1',l:'심 1 (생각하는 쪽)',t:'s',o},{k:'sim2',l:'심 2',t:'s',o},{k:'marry',l:'결혼',t:'c'},{k:'friendly',l:'우호적 (해제하면 적대)',t:'c'},{k:'social',l:'사회적 관계',t:'s',o:[['','—'],...Object.entries(SO)]},{k:'comment',l:'sim1이 sim2를 어떻게 생각하나',t:'a'}],v,async x=>{
+if(x.sim1==x.sim2)throw new Error('서로 다른 심을 고르세요');
+await put('rel',{id,sim1:x.sim1,sim2:x.sim2,blood:r?r.blood:null,marry:x.marry,friendly:x.friendly,social:x.social,comment:x.comment});await sync()},r?()=>rm('rel',id):null)}
+/* ---- 화면 ---- */
+function render(){const P=curP()||D.play[0];S.play=P?P.id:'';if(P)try{localStorage.setItem('smsm_play',P.id)}catch(e){}
+$('#app').innerHTML=`<header><div class=top><select id=ps>${D.play.map(p=>`<option value=${p.id} ${p.id==S.play?'selected':''}>${E(p.goal||'(목표 없음)')}${p.end_date?' ✓':''}</option>`).join('')}</select><button data-a=newplay>＋</button></div>
+${P?`<nav>${[['sim','심'],['rel','관계'],['alb','앨범'],['play','플레이']].map(([k,l])=>`<button data-a=tab data-id=${k} class="${S.tab==k?'on':''}">${l}</button>`).join('')}</nav>`:''}</header>
+<main>${P?view(P):'<p class=mut>플레이가 없어요. ＋ 로 시작하세요.</p>'}</main>`}
+const fsel=()=>`<select id=fs style="width:auto"><option value="">전체 심</option>${sims().map(s=>`<option value=${s.id} ${S.fs==s.id?'selected':''}>${E(nm(s))}</option>`).join('')}</select>`;
+function view(P){const t=S.tab;if(t=='sim'){const s=S.sim&&byId('sim',S.sim);return s?simView(s):`<div class=bar><button class=pri data-a=addsim>＋ 심</button></div><div class=g>${sims().map(s=>`<div class=c data-a=sim data-id=${s.id}><div class=im>${IM(thumb(s))}</div><b>${E(nm(s))}</b><div class=mut>${stl(s)}</div></div>`).join('')}</div>`}
+if(t=='rel'){const rs=D.rel.filter(r=>{const a=byId('sim',r.sim1);return a&&a.play==S.play&&byId('sim',r.sim2)&&(!S.fs||r.sim1==S.fs)});
+return`<div class=bar><button class=pri data-a=addrel>＋ 관계</button>${fsel()}</div>${rs.map(r=>`<div class=row data-a=er data-id=${r.id}><b>${E(nm(byId('sim',r.sim1)))} → ${E(nm(byId('sim',r.sim2)))}</b> <span class=mut>${[r.blood&&r.blood+'촌',r.marry&&'결혼',r.friendly?'우호':'적대',r.social&&SO[r.social]].filter(Boolean).join(' · ')}</span>${r.comment?`<div class=mut>${E(r.comment)}</div>`:''}</div>`).join('')||'<p class=mut>관계가 없어요</p>'}`}
+if(t=='alb'){const as=D.album.filter(a=>a.play==S.play&&(!S.fs||(a.sims||[]).includes(S.fs))).reverse();
+return`<div class=bar><button class=pri data-a=addalb>＋ 스샷</button>${fsel()}</div><div class="g w">${as.map(a=>`<div class=c data-a=va data-id=${a.id}><div class="im w">${IM(a.photo)}</div><div class=mut>${E((a.sims||[]).map(i=>byId('sim',i)).filter(Boolean).map(nm).join(', '))}</div></div>`).join('')}</div>`}
+const lt=D.lifetime.find(l=>l.play==P.id)||{};
+return`<div class=bar><button data-a=editplay>수정</button><button data-a=endplay>${P.end_date?'재개':'완료 처리'}</button></div>
+<p><b>${E(P.goal||'(목표 없음)')}</b><br><span class=mut>${P.type} · ${P.start_date||'?'} ~ ${P.end_date||'진행 중'} · ${P.today}일째</span></p>
+<p class=mut>${ST.map((k,i)=>KO[i]+' '+(lt[k]??'-')).join(' · ')}</p><hr>
+<p>원본 폴더: ${FN?E(FN):'연결 안 됨'}</p><div class=bar>${Media.folder.supported?'<button data-a=dir>폴더 연결</button><button data-a=sync>원본 받아오기</button>':'<span class=mut>폴더 기능은 PC Chrome/Edge에서만 쓸 수 있어요</span>'}<span id=ss class=mut></span></div><hr><button data-a=logout>로그아웃</button>`}
+function simView(s){const L=id=>{const q=id&&byId('sim',id);return q?`<a data-a=sim data-id=${id}>${E(nm(q))}</a>`:'-'},pr=D.profile.filter(x=>x.sim==s.id);
+return`<div class=bar><button data-a=back>← 목록</button><button data-a=editsim data-id=${s.id}>수정</button><button data-a=addprof data-id=${s.id}>＋ 프로필</button><button data-a=relsim data-id=${s.id}>관계</button><button data-a=albsim data-id=${s.id}>앨범</button></div>
+<div class=big><div class=im>${IM(thumb(s))}</div><div><h2 style="margin:0">${E(nm(s))}</h2><div class=mut>${s.sex} · ${stl(s)}</div><p>아버지 ${L(s.father)}<br>어머니 ${L(s.mother)}<br>파트너 ${L(s.partner)}</p></div></div><hr>
+<div class=g>${pr.map(x=>`<div class=c data-a=ep data-id=${x.id}><div class=im>${IM(x.profile)}</div><div class=mut>${x.type=='formal'?'포멀':'인포멀'} · ${KO[ST.indexOf(x.stage)]||'-'}</div></div>`).join('')||'<span class=mut>프로필이 없어요</span>'}</div>`}
+async function viewAlb(a){const v=$('#vw');v.innerHTML=`<img id=vi src="${Media.url(a.photo)}"><p class=mut>${E((a.sims||[]).map(i=>byId('sim',i)).filter(Boolean).map(nm).join(', '))}</p><div class=bar><button data-a=vx>닫기</button><button data-a=ea data-id=${a.id}>수정</button></div>`;v.showModal();
+try{if(Media.folder.supported&&FN&&await Media.folder.ensure()){const u=await Media.folder.fileUrl(a.id);if(u)$('#vi').src=u}}catch(e){}}
+/* ---- 이벤트 ---- */
+document.addEventListener('change',e=>{if(e.target.id=='ps'){S.play=e.target.value;S.sim=null;S.fs='';render()}if(e.target.id=='fs'){S.fs=e.target.value;render()}});
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-a]');if(!t)return;const a=t.dataset.a,id=t.dataset.id;try{switch(a){
+case'tab':S.tab=id;S.sim=null;break;case'sim':S.tab='sim';S.sim=id;break;case'back':S.sim=null;break;
+case'newplay':return playForm();case'editplay':return playForm(curP());
+case'endplay':{const p=curP();await put('play',{...p,end_date:p.end_date?null:today()});break}
+case'addsim':return simForm();case'editsim':return simForm(byId('sim',id));
+case'addprof':return profForm(null,byId('sim',id));case'ep':{const x=byId('profile',id);return profForm(x,byId('sim',x.sim))}
+case'addrel':return relForm();case'er':return relForm(byId('rel',id));
+case'addalb':return albForm();case'ea':$('#vw').close();return albForm(byId('album',id));
+case'va':return viewAlb(byId('album',id));case'vx':$('#vw').close();return;
+case'relsim':S.fs=id;S.tab='rel';S.sim=null;break;case'albsim':S.fs=id;S.tab='alb';S.sim=null;break;
+case'x':$('#dg').close();return;
+case'rm':if(!confirm('삭제할까요?'))return;try{await RM();$('#dg').close();render()}catch(x){$('#er').textContent=x.message}return;
+case'dir':try{await Media.folder.connect();FN=await Media.folder.name()}catch(x){if(x.name!='AbortError')alert(x.message)}break;
+case'sync':{const o=$('#ss');try{o.textContent='받는 중…';const r=await Media.sync({onProgress:p=>o.textContent=p.done+'/'+p.total});o.textContent=r.total?`완료 ${r.done}/${r.total}`+(r.failed.length?` · 실패 ${r.failed.length}`:''):'대기 중인 원본 없음'}catch(x){o.textContent=x.message}return}
+case'logout':{const s=SES();setSES(null);try{s&&await fetch(`${SB}/auth/v1/logout`,{method:'POST',headers:{apikey:ANON,Authorization:'Bearer '+s.access_token}})}catch(x){}return boot()}}render()}catch(x){alert(x.message)}});
+/* ---- 시작 ---- */
+function loginView(){$('#app').innerHTML=`<form id=lf class=lg><h2 style="margin:0">smsm</h2><input id=em type=email placeholder="이메일" autocomplete=username><input id=pw type=password placeholder="비밀번호" autocomplete=current-password><button class=pri>로그인</button><p id=lm class=mut></p></form>`;
+$('#lf').onsubmit=async e=>{e.preventDefault();$('#lm').textContent='로그인 중…';try{await gotrue('password',{email:$('#em').value.trim(),password:$('#pw').value});boot()}catch(x){$('#lm').textContent=x.message}}}
+async function boot(){if(!SES())return loginView();try{FN=await Media.folder.name().catch(()=>'');await load();S.play=LSget('smsm_play');render()}catch(x){$('#app').innerHTML=`<main><p class=err>${E(x.message)}</p><button data-a=logout>로그아웃</button></main>`}}
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+boot();
+</script></body></html>
