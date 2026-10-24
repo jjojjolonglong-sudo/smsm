@@ -155,33 +155,33 @@ const f0=byId('sim',S.tf),fid=f0&&f0.play==S.play?S.tf:ss[0].id;S.tf=fid;
 const K={},C={};D.sim.forEach(s=>{for(const p of[s.father,s.mother])if(p)(K[p]=K[p]||[]).push(s.id)});
 const lk=(a,b)=>{if(a&&b&&a!=b&&byId('sim',a)&&byId('sim',b)){(C[a]=C[a]||new Set).add(b);(C[b]=C[b]||new Set).add(a)}};
 ss.forEach(s=>{(s.partners||[]).forEach(p=>lk(s.id,p));lk(s.father,s.mother)});
-/* 1) 혈연 범위 */
-const B=new Map,ad=(id,lv,f,deg,dr)=>{const o=B.get(id);if(!o||deg<o.deg)B.set(id,{id,lv,f,deg,dr})};
-for(const[a,d1]of anc(fid)){if(d1>3)continue;const mx=d1?4-d1:3,q=[[a,0]],sn=new Set([a]);
-while(q.length){const[x,d2]=q.shift(),deg=d1+d2,dr=!d1||!d2;if(dr?deg<=3:deg<=4)ad(x,d2-d1,dr?deg>=3:deg>=4,deg,dr);
-if(d2<mx)for(const c of K[x]||[])if(!sn.has(c)){sn.add(c);q.push([c,d2+1])}}}
-/* 2) 카드(인스턴스): 같은 심이 여러 자리에 나올 수 있음. 키 = 심id, 배우자 자리는 '심id@기준카드' */
-const I=new Map,BY={},mk=(id,lv,f,key,src)=>{const i={key,id,lv,f,mt:[],src};I.set(key,i);(BY[id]=BY[id]||[]).push(key);return i},mate=(a,b)=>{a.mt.push(b.key);b.mt.push(a.key)};
-B.forEach(n=>mk(n.id,n.lv,n.f,n.id));
-const dn=new Set;
-for(const n of[...B.values()]){const a=I.get(n.id);for(const q of C[n.id]||[]){const qb=B.get(q);
-if(qb){if(n.dr&&qb.dr&&n.lv==qb.lv){if(!dn.has(q+n.id)){dn.add(n.id+q);mate(a,I.get(q))}}
-else if(n.deg<qb.deg||n.deg==qb.deg&&n.id<q)mate(a,mk(q,n.lv,n.f,q+'@'+n.id));   /* 근친혼: 배우자 자리에 중복 카드 */
-continue}
-const b=mk(q,n.lv,n.f,q+'@'+n.id);mate(a,b);if(n.f)continue;const x=byId('sim',q);
-for(const p of[x.father,x.mother])if(p&&byId('sim',p)&&!BY[p])mk(p,n.lv-1,0,p+'@'+b.key);
-for(const c of K[q]||[])if(!BY[c])mk(c,n.lv+1,0,c+'@'+b.key,b.key)}}
-/* 3) 부모 연결: 부부로 묶인 카드 쌍을 우선 선택 */
-const PK={},KD={},pick=c=>{const s=byId('sim',c.id),ps=[s.father,s.mother].filter(p=>BY[p]);
-if(ps.length<2)return ps.map(p=>c.src&&I.get(c.src).id==p?c.src:BY[p][0]);
-let best=null,bs=-1;for(const a of BY[ps[0]])for(const b of BY[ps[1]]){const sc=(a==c.src||b==c.src?2:0)+(I.get(a).mt.includes(b)?1:0);if(sc>bs){bs=sc;best=[a,b]}}return best};
-I.forEach(c=>{PK[c.key]=pick(c);PK[c.key].forEach(p=>(KD[p]=KD[p]||[]).push(c.key))});
-/* 4) 배치: 세대별 줄, 부모/자녀 위치 평균으로 정렬, 부부는 붙여 놓기 */
+/* 1) 혈연 자리: 같은 심이라도 (세대가 다른) 경로마다 자리를 따로 가짐. 키 = 심id|세대 */
+const B=new Map,ad=(id,lv,f,deg,an)=>{const k=id+'|'+lv,o=B.get(k);if(!o)B.set(k,{id,lv,f,deg,an});else{if(deg<o.deg){o.f=f;o.deg=deg}o.an=o.an||an}};
+const dsc=(x,d1,d2,path)=>{const dr=!d1||!d2,deg=d1+d2;if(dr?deg<=3:deg<=4)ad(x,d2-d1,dr?deg>=3:deg>=4,deg,!d2);
+if(d2<(d1?4-d1:3))for(const c of K[x]||[])if(!path.has(c)){path.add(c);dsc(c,d1,d2+1,path);path.delete(c)}};
+const upw=(x,d1,path)=>{dsc(x,d1,0,new Set(path));if(d1<3){const s=byId('sim',x);for(const p of[s.father,s.mother])if(p&&byId('sim',p)&&!path.has(p)){path.add(p);upw(p,d1+1,path);path.delete(p)}}};
+upw(fid,0,new Set([fid]));
+/* 2) 카드: 혈연 자리 + 파트너 자리(카드마다 자기 파트너를 옆에 붙임, 다른 곳에 있는 심이면 중복 카드) */
+const I=new Map,IX={},BL=new Set,mk=(key,id,lv,f,pin)=>{const i={key,id,lv,f,mt:[],pin};I.set(key,i);(IX[id+'|'+lv]=IX[id+'|'+lv]||[]).push(key);return i},
+mate=(a,b)=>{if(!a.mt.includes(b.key)){a.mt.push(b.key);b.mt.push(a.key)}};
+B.forEach(n=>{BL.add(n.id);mk(n.id+'|'+n.lv,n.id,n.lv,n.f,1).an=n.an});
+const bl=[...I.values()];
+for(const c of bl){const s=byId('sim',c.id),f=s.father&&I.get(s.father+'|'+(c.lv-1)),m=s.mother&&I.get(s.mother+'|'+(c.lv-1));if(f&&m&&f.an&&m.an)mate(f,m)}   /* 직계 조상 줄의 두 부모만 자연스러운 부부로 묶음 (근친이면 중복 카드) */
+for(const n of bl)for(const q of C[n.id]||[]){if(n.mt.some(m=>I.get(m).id==q))continue;const nb=!BL.has(q),b=mk(q+'@'+n.key,q,n.lv,n.f,nb?1:0);mate(n,b);
+if(!nb||n.f)continue;const x=byId('sim',q);   /* 혈연이 아닌 배우자는 위아래 1촌까지 */
+for(const p of[x.father,x.mother])if(p&&byId('sim',p)&&!IX[p+'|'+(n.lv-1)])mk(p+'@'+b.key,p,n.lv-1,0,1);
+for(const c of K[q]||[])if(!IX[c+'|'+(n.lv+1)])mk(c+'@'+b.key,c,n.lv+1,0,1)}
+/* 3) 부모 연결: 항상 바로 윗줄의 카드와만 연결 */
+const PK={},JT={},KD={};
+I.forEach(c=>{if(!c.pin)return;const s=byId('sim',c.id),cs=[s.father,s.mother].filter(Boolean).map(p=>IX[p+'|'+(c.lv-1)]||[]).filter(a=>a.length);if(!cs.length)return;
+let r=cs.map(a=>a[0]),j=false;if(cs.length==2)for(const a of cs[0]){const b=cs[1].find(x=>I.get(a).mt.includes(x));if(b){r=[a,b];j=true;break}}
+PK[c.key]=r;JT[c.key]=j;r.forEach(p=>(KD[p]=KD[p]||[]).push(c.key))});
+/* 4) 배치 */
 const L=[...new Set([...I.values()].map(n=>n.lv))].sort((a,b)=>a-b),R={},X={},bd=k=>birth(byId('sim',I.get(k).id));
 L.forEach(l=>R[l]=[...I.keys()].filter(k=>I.get(k).lv==l).sort((a,b)=>bd(a)-bd(b)));
 const place=()=>L.forEach(l=>R[l].forEach((k,i)=>X[k]=i-(R[l].length-1)/2)),avg=a=>a.reduce((t,k)=>t+X[k],0)/a.length;place();
 const sweep=down=>{for(const l of down?L:[...L].reverse()){const row=R[l],key={};
-row.forEach(k=>{const ns=down?PK[k]:(KD[k]||[]);if(ns.length)key[k]=avg(ns)});
+row.forEach(k=>{const ns=down?(PK[k]||[]):(KD[k]||[]);if(ns.length)key[k]=avg(ns)});
 row.forEach(k=>{if(key[k]==null){const q=I.get(k).mt.find(m=>key[m]!=null&&row.includes(m));key[k]=q!=null?key[q]:X[k]}});
 const out=[],sn=new Set;
 for(const k of[...row].sort((a,b)=>key[a]-key[b])){if(sn.has(k))continue;sn.add(k);const ms=I.get(k).mt.filter(m=>!sn.has(m)&&row.includes(m));ms.forEach(m=>sn.add(m));
@@ -191,12 +191,13 @@ sweep(1);sweep(0);sweep(1);
 /* 5) 그리기 */
 const W=84,RH=150,P=20,xs=Object.values(X),mn=Math.min(...xs),w=(Math.max(...xs)-mn)*W+68+P*2,h=(L.length-1)*RH+112+P*2;
 const px=k=>(X[k]-mn)*W+P,py=k=>L.indexOf(I.get(k).lv)*RH+P,fd=k=>I.get(k).f,MR=(a,b)=>D.rel.some(r=>r.marry&&(r.sim1==a&&r.sim2==b||r.sim1==b&&r.sim2==a));
-let sv='';
-for(const k in PK){const pa=PK[k];if(!pa.length)continue;const two=pa.length==2&&I.get(pa[0]).lv==I.get(pa[1]).lv,ax=pa.reduce((t,i)=>t+px(i)+34,0)/pa.length,y1=py(pa[0])+(two?45:112),y2=py(k);
-sv+=`<path d="M${ax} ${y1}V${y2-18}H${px(k)+34}V${y2}" opacity="${fd(k)||pa.some(fd)?.3:.8}"/>`}
-const sn=new Set;I.forEach(a=>a.mt.forEach(m=>{const b=I.get(m);if(sn.has(m+a.key)||a.lv!=b.lv)return;sn.add(a.key+m);const[l,r]=X[a.key]<X[m]?[a.key,m]:[m,a.key];
+let sv='';const ln=(x1,y1,x2,y2,o)=>sv+=`<path d="M${x1} ${y1}V${y2-18}H${x2}V${y2}" opacity="${o}"/>`;
+for(const k in PK){const pa=PK[k],o=fd(k)||pa.some(fd)?.3:.8;
+if(JT[k])ln((px(pa[0])+px(pa[1]))/2+34,py(pa[0])+45,px(k)+34,py(k),o);else pa.forEach(p=>ln(px(p)+34,py(p)+112,px(k)+34,py(k),o))}
+const sn=new Set;I.forEach(a=>a.mt.forEach(m=>{const b=I.get(m);if(sn.has(m+'/'+a.key))return;sn.add(a.key+'/'+m);const[l,r]=X[a.key]<X[m]?[a.key,m]:[m,a.key];
 sv+=`<path d="M${px(l)+68} ${py(l)+45}H${px(r)}" ${MR(a.id,b.id)?'':'stroke-dasharray="4 3"'} opacity="${a.f||b.f?.3:.8}"/>`}));
-const nd=[...I.values()].map(n=>{const s=byId('sim',n.id);return`<div class="tn${n.f?' f':''}${n.key==fid?' me':''}${BY[n.id].length>1?' dp':''}" style="left:${px(n.key)}px;top:${py(n.key)}px" data-a=tree data-id=${n.id}><div class=im>${IM(thumb(s))}</div><div class=nm>${E(nm(s))}</div></div>`}).join('');
+const cnt={};I.forEach(n=>cnt[n.id]=(cnt[n.id]||0)+1);
+const nd=[...I.values()].map(n=>{const s=byId('sim',n.id);return`<div class="tn${n.f?' f':''}${n.key==fid+'|0'?' me':''}${cnt[n.id]>1?' dp':''}" style="left:${px(n.key)}px;top:${py(n.key)}px" data-a=tree data-id=${n.id}><div class=im>${IM(thumb(s))}</div><div class=nm>${E(nm(s))}</div></div>`}).join('');
 return`<div class=bar><select id=ts style="width:auto">${ss.map(s=>`<option value=${s.id} ${s.id==fid?'selected':''}>${E(nm(s))}</option>`).join('')}</select><span class=mut>흐림: 직계 3촌·방계 4촌 / 점선 부부: 결혼 표시 없음 / 점선 테두리: 같은 심의 중복 표시</span></div><div id=tr class=tr><div style="position:relative;width:${w}px;height:${h}px"><svg width="${w}" height="${h}" fill="none" stroke="currentColor">${sv}</svg>${nd}</div></div>`}
 function simView(s){const L=id=>{const q=id&&byId('sim',id);return q?`<a data-a=sim data-id=${id}>${E(nm(q))}</a>`:'-'},pr=D.profile.filter(x=>x.sim==s.id);
 return`<div class=bar><button data-a=back>← 목록</button><button data-a=editsim data-id=${s.id}>수정</button><button data-a=addprof data-id=${s.id}>＋ 프로필</button><button data-a=relsim data-id=${s.id}>관계</button><button data-a=albsim data-id=${s.id}>앨범</button><button data-a=treesim data-id=${s.id}>가계도</button></div>
