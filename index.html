@@ -36,8 +36,8 @@ dialog h3{margin:0 0 6px}label{display:block;margin:10px 0 2px;color:var(--mut);
 .ms{display:flex;flex-wrap:wrap;gap:0 14px}.pv{width:120px;margin-top:6px}.pv.w{width:200px}.pv:empty{display:none}
 .lg{max-width:300px;margin:25vh auto;display:grid;gap:8px;padding:0 14px}
 .tr{overflow:auto;border:1px solid var(--ln);background:var(--card);max-height:75vh}.tr svg{position:absolute;left:0;top:0;color:var(--mut)}
-.tn{position:absolute;width:68px;text-align:center;cursor:pointer;font-size:11px}.tn.f{opacity:.35}.tn.me{transform:scale(1.14);transform-origin:top center;z-index:2;font-weight:600}.tn.me .im{outline:3px solid var(--ac)}
-.nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tn{position:absolute;width:68px;text-align:center;cursor:pointer;font-size:11px}.tn.f{opacity:.35}.tn.me{width:88px;font-weight:600}.tn.me .im{outline:3px solid var(--ac)}
+.nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;height:18px;line-height:18px}
 .tn.dp .im{outline:2px dashed var(--ac);outline-offset:1px}
  [hidden]{display:none!important}
 .cb{position:relative}.cbl{position:absolute;left:0;right:0;z-index:9;max-height:220px;overflow:auto;background:var(--card);border:1px solid var(--ln);box-shadow:0 4px 12px #0003}
@@ -72,7 +72,7 @@ const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOStr
 /* ---- 수명 단계 / 나이 ---- */
 const ST=['baby','infant','toddler','child','teen','young_adult','adult','elder','ghost'],KO=['아기','영아','유아','어린이','청소년','청년','중년','노년','유령'];
 const DEF={baby:3,infant:3,toddler:5,child:7,teen:7,young_adult:14,adult:14,elder:14,ghost:14};
-const SO={bestie:'단짝',friend:'친구',ex:'전애인',old_friend:'옛친구'};
+const SO={bestie:'단짝',friend:'친구',lover:'애인',ex:'전애인',old_friend:'옛친구'};
 /* 생일 = 플레이 일수 기준 (1일차 = 1, 시작 전에 태어난 심은 0 이하) */
 const birth=s=>s.birth_day??0;
 const thumb=s=>{const p=D.profile.filter(x=>x.sim==s.id&&x.type=='formal').sort((a,b)=>ST.indexOf(a.stage)-ST.indexOf(b.stage)||(a.created_at||'~').localeCompare(b.created_at||'~'));return p.length?p[p.length-1].profile:''};
@@ -138,7 +138,6 @@ chk(v.b,v.c);chk(v.e,v.f);return a.birth_day+age(v.b,v.c)-age(v.e,v.f)}
 function simForm(s){const id=s?s.id:nid(),v=s||{sex:'womb'},opp=sx=>sx=='womb'?'testis':'womb',lt=D.lifetime.find(l=>l.play==S.play)||{};
 const so=[['','— 없음'],...sims().filter(q=>q.id!=id).map(q=>[q.id,nm(q)])];
 const op=(sx,cur)=>[['','— 없음'],...sims().filter(q=>q.id!=id&&(q.sex==sx||q.id==cur)).map(q=>[q.id,nm(q)]),['__new','＋ 새 인물']];
-const po=(sx,cur)=>sims().filter(q=>q.id!=id&&(q.sex==sx||cur.includes(q.id))).map(q=>[q.id,nm(q)]);
 const m0=s?'keep':sims().length?'ref':'first',hid=g=>g.split(' ').includes(m0)?'':' hidden',
 sl=(n,d)=>`<select name=${n}>${ST.map((k,i)=>`<option value=${i} ${i==d?'selected':''}>${KO[i]} (${lt[k]??'무제한'}일)</option>`).join('')}</select>`;
 const bh=`<label>생일 (플레이 일수 기준)</label><select name=bmode>${s?`<option value=keep>변경 안 함 (현재 ${s.birth_day==null?'미설정':s.birth_day+'일'})</option>`:''}<option value=first ${m0=='first'?'selected':''}>첫 심: 플레이 1일차에 생성</option><option value=ref ${m0=='ref'?'selected':''}>기존 심 기준: 연령대·일차로 계산</option><option value=gap>기존 심 기준: 생일 차이(일) 직접 입력 (출산 등)</option></select>
@@ -146,19 +145,19 @@ const bh=`<label>생일 (플레이 일수 기준)</label><select name=bmode>${s?
 <div data-g="ref"${hid('ref')}><label>기준 심의 연령대 · 일차 (그 연령대의 몇 번째 날)</label><div class=nw>${sl('bb',6)}<input type=number name=bc min=1 value=1></div></div>
 <div data-g="first ref"${hid('first ref')}><label>이 심의 연령대 · 일차</label><div class=nw>${sl('be',0)}<input type=number name=bf min=1 value=1></div></div>
 <div data-g="gap"${hid('gap')}><label>기준 심의 생일로부터 며칠 뒤에 태어났나 (먼저 태어났으면 −)</label><input type=number name=bn value=2></div>`;
-modal(s?'심 수정':'새 심',[{k:'first_name',l:'이름',t:'t'},{k:'family_name',l:'성',t:'t'},{k:'sex',l:'성별',t:'s',o:[['womb','womb'],['testis','testis']]},{k:'father',l:'아버지 (testis)',t:'sp',o:op('testis',v.father),nw:1},{k:'mother',l:'어머니 (womb)',t:'sp',o:op('womb',v.mother),nw:1},{k:'partners',l:'파트너 (반대 성별, 여러 명 가능)',t:'spm',o:po(opp(v.sex),v.partners||[]),nw:1},{k:'h',t:'h',h:bh}],v,async(x,f)=>{
+modal(s?'심 수정':'새 심',[{k:'first_name',l:'이름',t:'t'},{k:'family_name',l:'성',t:'t'},{k:'sex',l:'성별',t:'s',o:[['womb','womb'],['testis','testis']]},{k:'father',l:'아버지 (testis)',t:'sp',o:op('testis',v.father),nw:1},{k:'mother',l:'어머니 (womb)',t:'sp',o:op('womb',v.mother),nw:1},{k:'partner',l:'메인 파트너 (반대 성별, 1명)',t:'sp',o:op(opp(v.sex),v.partner),nw:1},{k:'h',t:'h',h:bh}],v,async(x,f)=>{
 const e=f.elements,md=e.bmode.value,bd=md=='keep'?s.birth_day:calcBirth(md,byId('sim',e.bref.value),{b:+e.bb.value,c:+e.bc.value,e:+e.be.value,f:+e.bf.value,n:+e.bn.value||0});
-const blank=(a,b,sx)=>({id:nid(),play:S.play,first_name:a||null,family_name:b||null,sex:sx,father:null,mother:null,partners:[],birth_day:null});
+const blank=(a,b,sx)=>({id:nid(),play:S.play,first_name:a||null,family_name:b||null,sex:sx,father:null,mother:null,partner:null,birth_day:null});
 const mk=async(k,sx)=>{if(x[k]!='__new')return;const a=e[k+'_f'].value.trim(),b=e[k+'_l'].value.trim();if(!a&&!b)throw new Error('새 인물의 이름을 입력하세요');const n=blank(a,b,sx);await put('sim',n);x[k]=n.id};
-x.sex=x.sex||'womb';await mk('father','testis');await mk('mother','womb');
-const a=e.partners_f.value.trim(),b=e.partners_l.value.trim();if(a||b){const n=blank(a,b,opp(x.sex));await put('sim',n);x.partners.push(n.id)}
-const old=(s&&s.partners)||[];
+x.sex=x.sex||'womb';await mk('father','testis');await mk('mother','womb');await mk('partner',opp(x.sex));
+const old=s&&s.partner;
 await put('sim',{id,play:S.play,...x,birth_day:bd});
-/* 파트너는 양쪽에 자동 지정, 한쪽이 끊으면 다른 쪽도 끊김 */
-for(const pid of new Set([...old,...x.partners])){const q=byId('sim',pid);if(!q)continue;const ps=q.partners||[],has=ps.includes(id),want=x.partners.includes(pid);
-if(want&&!has)await put('sim',{...q,partners:[...ps,id]});if(!want&&has)await put('sim',{...q,partners:ps.filter(z=>z!=id)})}
+/* 메인 파트너는 양쪽에 자동 지정, 바꾸거나 비우면 이전 상대의 연결도 해제 (이전 상대는 '전애인'으로 기록할지 물어봄) */
+if(old&&old!=x.partner){const z=byId('sim',old);if(z&&z.partner==id)await put('sim',{...z,partner:null});
+if(z&&confirm(`${nm(z)}을(를) 관계에 '전애인'으로 기록할까요?`))for(const[p,q]of[[id,old],[old,id]]){const r=D.rel.find(r=>r.sim1==p&&r.sim2==q);await put('rel',r?{...r,social:r.social||'ex'}:{id:nid(),sim1:p,sim2:q,blood:null,marry:false,friendly:true,social:'ex',comment:null})}}
+if(x.partner){const q=byId('sim',x.partner);if(q&&q.partner!=id){const p2=q.partner&&byId('sim',q.partner);if(p2&&p2.partner==q.id)await put('sim',{...p2,partner:null});await put('sim',{...q,partner:id})}}
 S.sim=id;await sync()},s?async()=>{await rm('sim',id);S.sim=null;await sync()}:null);
-SF=sx=>{CBO.partners=po(opp(sx),[...$('#fm .cb[data-k=partners] .chip')].map(c=>c.dataset.v))}}
+SF=sx=>{CBO.partner=op(opp(sx),$('#fm [name=partner]').value)}}
 function profForm(x,sim){const id=x?x.id:nid(),v=x||{type:'formal',stage:(D.profile.filter(p=>p.sim==sim.id).pop()||{}).stage||'baby'};
 modal(x?'프로필 수정':'프로필 추가',[{k:'profile',l:'사진',t:'p'},{k:'type',l:'종류',t:'s',o:[['formal','포멀 (대표 썸네일 후보)'],['informal','인포멀']]},{k:'stage',l:'수명 단계',t:'s',o:ST.map((k,i)=>[k,KO[i]])}],v,async(o,f)=>{
 const file=f.elements.profile.files[0];let h=x&&x.profile;if(file)h=await up(file);if(!h)throw new Error('사진을 선택하세요');
@@ -175,7 +174,7 @@ await put('rel',{id,sim1:x.sim1,sim2:x.sim2,blood:r?r.blood:null,marry:x.marry,f
 function render(){const P=curP()||D.play[0];S.play=P?P.id:'';if(P)try{localStorage.setItem('smsm_play',P.id)}catch(e){}
 $('#app').innerHTML=`<header><div class=top><select id=ps>${D.play.map(p=>`<option value=${p.id} ${p.id==S.play?'selected':''}>${E(p.goal||'(목표 없음)')}${p.end_date?' ✓':''}</option>`).join('')}</select><button data-a=newplay>＋</button></div>
 ${P?`<nav>${[['sim','심'],['tree','가계도'],['rel','관계'],['alb','앨범'],['play','플레이']].map(([k,l])=>`<button data-a=tab data-id=${k} class="${S.tab==k?'on':''}">${l}</button>`).join('')}</nav>`:''}</header>
-<main>${P?view(P):'<p class=mut>플레이가 없어요. ＋ 로 시작하세요.</p>'}</main>`;const m=$('.tn.me'),t=$('#tr');if(m&&t){t.scrollLeft=m.offsetLeft-t.clientWidth/2+34;t.scrollTop=m.offsetTop-t.clientHeight/2+56}}
+<main>${P?view(P):'<p class=mut>플레이가 없어요. ＋ 로 시작하세요.</p>'}</main>`;const m=$('.tn.me'),t=$('#tr');if(m&&t){t.scrollLeft=m.offsetLeft-t.clientWidth/2+m.offsetWidth/2;t.scrollTop=m.offsetTop-t.clientHeight/2+m.offsetHeight/2}}
 const fsel=()=>`<select id=fs style="width:auto"><option value="">전체 심</option>${sims().map(s=>`<option value=${s.id} ${S.fs==s.id?'selected':''}>${E(nm(s))}</option>`).join('')}</select>`;
 function view(P){const t=S.tab;if(t=='sim'){const s=S.sim&&byId('sim',S.sim);return s?simView(s):`<div class=bar><button class=pri data-a=addsim>＋ 심</button></div><div class=g>${sims().map(s=>`<div class=c data-a=sim data-id=${s.id}><div class=im>${IM(thumb(s))}</div><b>${E(nm(s))}</b><div class=mut>${s.sex}</div></div>`).join('')}</div>`}
 if(t=='tree')return treeView();
@@ -188,29 +187,27 @@ return`<div class=bar><button data-a=editplay>수정</button><button data-a=endp
 <p><b>${E(P.goal||'(목표 없음)')}</b><br><span class=mut>${P.type} · ${P.start_date||'?'} ~ ${P.end_date||'진행 중'}</span></p>
 <p class=mut>${ST.map((k,i)=>KO[i]+' '+(lt[k]??(k=='ghost'?'∞':'-'))).join(' · ')}</p><hr>
 <p>원본 폴더: ${FN?E(FN):'연결 안 됨'}</p><div class=bar>${Media.folder.supported?'<button data-a=dir>폴더 연결</button><button data-a=sync>원본 받아오기</button>':'<span class=mut>폴더 기능은 PC Chrome/Edge에서만 쓸 수 있어요</span>'}<span id=ss class=mut></span></div><hr><button data-a=logout>로그아웃</button>`}
-/* ---- 가계도: 직계 3촌(2촌까지 선명), 방계 4촌(3촌까지 선명), 배우자는 위아래 1촌까지 ---- */
+/* ---- 가계도: 직계 3촌(2촌까지 선명), 방계 4촌(3촌까지 선명), 배우자는 중심 심만 표시 ---- */
 function treeView(){const ss=sims();if(!ss.length)return'<p class=mut>심이 없어요</p>';
-const f0=byId('sim',S.tf),fid=f0&&f0.play==S.play?S.tf:ss[0].id;S.tf=fid;
-const K={},C={};D.sim.forEach(s=>{for(const p of[s.father,s.mother])if(p)(K[p]=K[p]||[]).push(s.id)});
-const lk=(a,b)=>{if(a&&b&&a!=b&&byId('sim',a)&&byId('sim',b)){(C[a]=C[a]||new Set).add(b);(C[b]=C[b]||new Set).add(a)}};
-ss.forEach(s=>{(s.partners||[]).forEach(p=>lk(s.id,p));lk(s.father,s.mother)});
-/* 1) 혈연 자리: 같은 심이라도 (세대가 다른) 경로마다 자리를 따로 가짐. 키 = 심id|세대 */
-const B=new Map,ad=(id,lv,f,deg,an,dr)=>{const k=id+'|'+lv,o=B.get(k);if(!o)B.set(k,{id,lv,f,deg,an,dr});else{if(deg<o.deg){o.f=f;o.deg=deg}o.an=o.an||an;o.dr=o.dr||dr}};
-const dsc=(x,d1,d2,path)=>{const dr=!d1||!d2,deg=d1+d2;if(dr?deg<=3:deg<=4)ad(x,d2-d1,dr?deg>=3:deg>=4,deg,!d2,dr);
+const f0=byId('sim',S.tf),fid=f0&&f0.play==S.play?S.tf:ss[0].id,FK=fid+'|0';S.tf=fid;
+const K={};D.sim.forEach(s=>{for(const p of[s.father,s.mother])if(p)(K[p]=K[p]||[]).push(s.id)});
+/* 1) 혈연 자리: 같은 심도 경로(세대)가 다르면 자리를 따로 가짐. 키 = 심id|세대 */
+const B=new Map,ad=(id,lv,f,deg,an)=>{const k=id+'|'+lv,o=B.get(k);if(!o)B.set(k,{id,lv,f,deg,an});else{if(deg<o.deg){o.f=f;o.deg=deg}o.an=o.an||an}};
+const dsc=(x,d1,d2,path)=>{const dr=!d1||!d2,deg=d1+d2;if(dr?deg<=3:deg<=4)ad(x,d2-d1,dr?deg>=3:deg>=4,deg,!d2);
 if(d2<(d1?4-d1:3))for(const c of K[x]||[])if(!path.has(c)){path.add(c);dsc(c,d1,d2+1,path);path.delete(c)}};
 const upw=(x,d1,path)=>{dsc(x,d1,0,new Set(path));if(d1<3){const s=byId('sim',x);for(const p of[s.father,s.mother])if(p&&byId('sim',p)&&!path.has(p)){path.add(p);upw(p,d1+1,path);path.delete(p)}}};
 upw(fid,0,new Set([fid]));
-/* 2) 카드: 혈연 자리 + 파트너 자리(카드마다 자기 파트너를 옆에 붙임, 다른 곳에 있는 심이면 중복 카드) */
+/* 2) 카드. 부부선은 (직계 조상 줄에서 서로 메인 파트너인 부모) + (중심 심과 그 배우자)뿐. 나머지 배우자는 그리지 않음 */
 const I=new Map,IX={},BL=new Set,mk=(key,id,lv,f,pin)=>{const i={key,id,lv,f,mt:[],pin};I.set(key,i);(IX[id+'|'+lv]=IX[id+'|'+lv]||[]).push(key);return i},
-mate=(a,b)=>{if(!a.mt.includes(b.key)){a.mt.push(b.key);b.mt.push(a.key)}};
-B.forEach(n=>{BL.add(n.id);Object.assign(mk(n.id+'|'+n.lv,n.id,n.lv,n.f,1),{an:n.an,dr:n.dr})});
-const bl=[...I.values()];
-for(const c of bl){const s=byId('sim',c.id),f=s.father&&I.get(s.father+'|'+(c.lv-1)),m=s.mother&&I.get(s.mother+'|'+(c.lv-1));if(f&&m&&f.an&&m.an)mate(f,m)}   /* 직계 조상 줄의 두 부모만 자연스러운 부부로 묶음 (근친이면 중복 카드) */
-for(const n of bl)for(const q of C[n.id]||[]){if(n.mt.some(m=>I.get(m).id==q))continue;if(!n.dr&&BL.has(q))continue;const nb=!BL.has(q),b=mk(q+'@'+n.key,q,n.lv,n.f,nb?1:0);mate(n,b);
-if(!nb||n.f)continue;const x=byId('sim',q);   /* 혈연이 아닌 배우자는 위아래 1촌까지 */
-for(const p of[x.father,x.mother])if(p&&byId('sim',p)&&!IX[p+'|'+(n.lv-1)])mk(p+'@'+b.key,p,n.lv-1,0,1);
-for(const c of K[q]||[])if(!IX[c+'|'+(n.lv+1)])mk(c+'@'+b.key,c,n.lv+1,0,1)}
-/* 3) 부모 연결: 항상 바로 윗줄의 카드와만 연결 */
+mate=(a,b)=>{if(!a.mt.includes(b.key)){a.mt.push(b.key);b.mt.push(a.key)}},mar=(a,b)=>byId('sim',a).partner==b||byId('sim',b).partner==a;
+B.forEach(n=>{BL.add(n.id);mk(n.id+'|'+n.lv,n.id,n.lv,n.f,1).an=n.an});
+for(const c of[...I.values()]){const s=byId('sim',c.id),f=s.father&&I.get(s.father+'|'+(c.lv-1)),m=s.mother&&I.get(s.mother+'|'+(c.lv-1));if(f&&m&&f.an&&m.an&&mar(f.id,m.id))mate(f,m)}
+const q=byId('sim',fid).partner;
+if(q&&byId('sim',q)){const nb=!BL.has(q),b=mk(q+'@'+FK,q,0,0,nb?1:0);mate(I.get(FK),b);   /* 배우자가 혈연이면 이 자리에 중복 카드 */
+if(nb){const x=byId('sim',q);for(const p of[x.father,x.mother])if(p&&byId('sim',p)&&!IX[p+'|-1'])mk(p+'@'+b.key,p,-1,0,1);   /* 혈연이 아닌 배우자는 위아래 1촌까지 */
+const fp=x.father&&I.get(x.father+'@'+b.key),mp=x.mother&&I.get(x.mother+'@'+b.key);if(fp&&mp&&mar(fp.id,mp.id))mate(fp,mp);
+for(const c of K[q]||[])if(!IX[c+'|1'])mk(c+'@'+b.key,c,1,0,1)}}
+/* 3) 부모 연결: 바로 윗줄 카드와만. 부부로 묶인 부모는 한 줄, 아니면 부모 각자의 카드 아래에서 따로 선이 나옴 */
 const PK={},JT={},KD={};
 I.forEach(c=>{if(!c.pin)return;const s=byId('sim',c.id),cs=[s.father,s.mother].filter(Boolean).map(p=>IX[p+'|'+(c.lv-1)]||[]).filter(a=>a.length);if(!cs.length)return;
 let r=cs.map(a=>a[0]),j=false;if(cs.length==2)for(const a of cs[0]){const b=cs[1].find(x=>I.get(a).mt.includes(x));if(b){r=[a,b];j=true;break}}
@@ -227,20 +224,19 @@ for(const k of[...row].sort((a,b)=>key[a]-key[b])){if(sn.has(k))continue;sn.add(
 out.push(...ms.filter((_,i)=>i%2),k,...ms.filter((_,i)=>!(i%2)))}
 R[l]=out;place()}};
 sweep(1);sweep(0);sweep(1);
-/* 5) 그리기 */
-const W=84,RH=150,P=20,xs=Object.values(X),mn=Math.min(...xs),w=(Math.max(...xs)-mn)*W+68+P*2,h=(L.length-1)*RH+112+P*2;
-const px=k=>(X[k]-mn)*W+P,py=k=>L.indexOf(I.get(k).lv)*RH+P,fd=k=>I.get(k).f,MR=(a,b)=>D.rel.some(r=>r.marry&&(r.sim1==a&&r.sim2==b||r.sim1==b&&r.sim2==a));
+/* 5) 그리기: 중심 카드는 실제로 더 크게 잡고(88px) 간격도 넉넉히 */
+const NW=68,FW=88,W=100,RH=180,P=24,cw=k=>k==FK?FW:NW,ch=k=>cw(k)*4/3+18,xs=Object.values(X),mn=Math.min(...xs),w=(Math.max(...xs)-mn)*W+FW+P*2,h=(L.length-1)*RH+cw(FK)*4/3+18+P*2;
+const cx=k=>(X[k]-mn)*W+P+FW/2,py=k=>L.indexOf(I.get(k).lv)*RH+P,fd=k=>I.get(k).f;
 let sv='';const ln=(x1,y1,x2,y2,o)=>sv+=`<path d="M${x1} ${y1}V${y2-18}H${x2}V${y2}" opacity="${o}"/>`;
 for(const k in PK){const pa=PK[k],o=fd(k)||pa.some(fd)?.3:.8;
-if(JT[k])ln((px(pa[0])+px(pa[1]))/2+34,py(pa[0])+45,px(k)+34,py(k),o);else pa.forEach(p=>ln(px(p)+34,py(p)+112,px(k)+34,py(k),o))}
-const sn=new Set;I.forEach(a=>a.mt.forEach(m=>{const b=I.get(m);if(sn.has(m+'/'+a.key))return;sn.add(a.key+'/'+m);const[l,r]=X[a.key]<X[m]?[a.key,m]:[m,a.key];
-sv+=`<path d="M${px(l)+68} ${py(l)+45}H${px(r)}" ${MR(a.id,b.id)?'':'stroke-dasharray="4 3"'} opacity="${a.f||b.f?.3:.8}"/>`}));
-const cnt={};I.forEach(n=>cnt[n.id]=(cnt[n.id]||0)+1);
-const nd=[...I.values()].map(n=>{const s=byId('sim',n.id);return`<div class="tn${n.f?' f':''}${n.key==fid+'|0'?' me':''}${n.id==fid&&n.key!=fid+'|0'?' dp':''}" style="left:${px(n.key)}px;top:${py(n.key)}px" data-a=tree data-id=${n.id}><div class=im>${IM(thumb(s))}</div><div class=nm>${E(nm(s))}</div></div>`}).join('');
-return`<div class=bar><select id=ts style="width:auto">${ss.map(s=>`<option value=${s.id} ${s.id==fid?'selected':''}>${E(nm(s))}</option>`).join('')}</select><span class=mut>굵은 테두리: 중심 심 (점선 테두리는 그 심의 중복) · 흐림: 직계 3촌·방계 4촌 · 점선 부부선: 결혼 표시 없음</span></div><div id=tr class=tr><div style="position:relative;width:${w}px;height:${h}px"><svg width="${w}" height="${h}" fill="none" stroke="currentColor">${sv}</svg>${nd}</div></div>`}
+if(JT[k])ln((cx(pa[0])+cx(pa[1]))/2,py(pa[0])+45,cx(k),py(k),o);else pa.forEach(p=>ln(cx(p),py(p)+ch(p),cx(k),py(k),o))}
+const sn=new Set;I.forEach(a=>a.mt.forEach(m=>{if(sn.has(m+'/'+a.key))return;sn.add(a.key+'/'+m);const[l,r]=X[a.key]<X[m]?[a.key,m]:[m,a.key];
+sv+=`<path d="M${cx(l)+cw(l)/2} ${py(l)+45}H${cx(r)-cw(r)/2}" opacity="${I.get(l).f||I.get(r).f?.3:.8}"/>`}));
+const nd=[...I.values()].map(n=>{const s=byId('sim',n.id);return`<div class="tn${n.f?' f':''}${n.key==FK?' me':''}${n.id==fid&&n.key!=FK?' dp':''}" style="left:${cx(n.key)-cw(n.key)/2}px;top:${py(n.key)}px" data-a=tree data-id=${n.id}><div class=im>${IM(thumb(s))}</div><div class=nm>${E(nm(s))}</div></div>`}).join('');
+return`<div class=bar><select id=ts style="width:auto">${ss.map(s=>`<option value=${s.id} ${s.id==fid?'selected':''}>${E(nm(s))}</option>`).join('')}</select><span class=mut>굵은 테두리: 중심 심 (점선은 그 심의 중복) · 흐림: 직계 3촌·방계 4촌 · 배우자는 중심 심만 표시</span></div><div id=tr class=tr><div style="position:relative;width:${w}px;height:${h}px"><svg width="${w}" height="${h}" fill="none" stroke="currentColor">${sv}</svg>${nd}</div></div>`}
 function simView(s){const L=id=>{const q=id&&byId('sim',id);return q?`<a data-a=sim data-id=${id}>${E(nm(q))}</a>`:'-'},pr=D.profile.filter(x=>x.sim==s.id);
 return`<div class=bar><button data-a=back>← 목록</button><button data-a=editsim data-id=${s.id}>수정</button><button data-a=addprof data-id=${s.id}>＋ 프로필</button><button data-a=relsim data-id=${s.id}>관계</button><button data-a=albsim data-id=${s.id}>앨범</button><button data-a=treesim data-id=${s.id}>가계도</button></div>
-<div class=big><div class=im>${IM(thumb(s))}</div><div><h2 style="margin:0">${E(nm(s))}</h2><div class=mut>${s.sex} · 생일 ${s.birth_day==null?'미설정':s.birth_day+'일'}</div><p>아버지 ${L(s.father)}<br>어머니 ${L(s.mother)}<br>파트너 ${(s.partners||[]).filter(i=>byId('sim',i)).map(L).join(', ')||'-'}</p></div></div><hr>
+<div class=big><div class=im>${IM(thumb(s))}</div><div><h2 style="margin:0">${E(nm(s))}</h2><div class=mut>${s.sex} · 생일 ${s.birth_day==null?'미설정':s.birth_day+'일'}</div><p>아버지 ${L(s.father)}<br>어머니 ${L(s.mother)}<br>파트너 ${L(s.partner)}</p></div></div><hr>
 <div class=g>${pr.map(x=>`<div class=c data-a=ep data-id=${x.id}><div class=im>${IM(x.profile)}</div><div class=mut>${x.type=='formal'?'포멀':'인포멀'} · ${KO[ST.indexOf(x.stage)]||'-'}</div></div>`).join('')||'<span class=mut>프로필이 없어요</span>'}</div>`}
 async function viewAlb(a){const v=$('#vw');v.innerHTML=`<img id=vi src="${Media.url(a.photo)}"><p class=mut>${E((a.sims||[]).map(i=>byId('sim',i)).filter(Boolean).map(nm).join(', '))}</p><div class=bar><button data-a=vx>닫기</button><button data-a=ea data-id=${a.id}>수정</button></div>`;v.showModal();
 try{if(Media.folder.supported&&FN&&await Media.folder.ensure()){const u=await Media.folder.fileUrl(a.id);if(u)$('#vi').src=u}}catch(e){}}
