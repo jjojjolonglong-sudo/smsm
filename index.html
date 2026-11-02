@@ -2,7 +2,7 @@
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>smsm</title>
-<link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#f7f7f5" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#161816" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="smsm">
 <style>
@@ -46,12 +46,16 @@ dialog h3{margin:0 0 6px}label{display:block;margin:10px 0 2px;color:var(--mut);
 .nw{display:flex;gap:6px;margin-top:4px}.nw[hidden]{display:none}
 </style></head><body>
 <div id="app"></div><dialog id="dg"></dialog><dialog id="vw"></dialog>
-<script src="https://jjojjolonglong-sudo.github.io/mnmn/media.js"></script>
+<script src="https://jjojjolonglong-sudo.github.io/mnmn/config.js"></script>
+<script src="https://jjojjolonglong-sudo.github.io/mnmn/media.v1.js"></script>
 <script>
-const SB='https://rtvvajhsnwkkrmncyfbs.supabase.co',ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0dnZhamhzbndra3JtbmN5ZmJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NjkwMTEsImV4cCI6MjEwNzA0NTAxMX0.O2aLLeazv_FhUhbVAkp4vz3pw8GPb_683dUu7Et1Cwk';
+const CFG=window.APP_CONFIG||{};
+const SB=CFG.SB||'https://rtvvajhsnwkkrmncyfbs.supabase.co',ANON=CFG.ANON||'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0dnZhamhzbndra3JtbmN5ZmJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NjkwMTEsImV4cCI6MjEwNzA0NTAxMX0.O2aLLeazv_FhUhbVAkp4vz3pw8GPb_683dUu7Et1Cwk';
+/* config.js 를 못 불러와도 한국시간 날짜는 계산되게 */
+if(typeof window.todayKST!=='function'){window.kstDate=d=>new Date((d instanceof Date?d.getTime():+d)+32400000).toISOString().slice(0,10);window.todayKST=()=>window.kstDate(Date.now())}
 const TB={play:'smsm_play',lifetime:'smsm_lifetime',sim:'smsm_sim',rel:'smsm_relation',profile:'smsm_profile',album:'smsm_album'};
 const $=s=>document.querySelector(s),E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-/* media.js 를 못 불러와도 앱이 죽지 않게 */
+/* media.v1.js 를 못 불러와도 앱이 죽지 않게 */
 if(!window.Media){const f=async()=>{throw new Error('media.js를 불러오지 못했어요')};window.Media={init(){},url:()=>'',img:()=>'',newId:()=>crypto.randomUUID(),folder:{supported:false,name:async()=>''},save:f,sync:f}}
 /* ---- 로그인 / REST ---- */
 const SES=()=>{try{return JSON.parse(localStorage.getItem('smsm_sb')||'null')}catch(e){return null}},setSES=s=>{try{s?localStorage.setItem('smsm_sb',JSON.stringify(s)):localStorage.removeItem('smsm_sb')}catch(e){}};
@@ -68,7 +72,7 @@ async function put(k,rows){rows=[].concat(rows).map(({created_at,user_id,...r})=
 async function rm(k,id){await rest(`${TB[k]}?id=eq.${id}`,{method:'DELETE'});await load()}
 const byId=(k,id)=>D[k].find(x=>x.id==id),curP=()=>byId('play',S.play),sims=()=>D.sim.filter(s=>s.play==S.play);
 const nm=s=>[s.first_name,s.family_name].filter(Boolean).join(' ')||'(이름 없음)';
-const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const today=()=>todayKST();
 /* ---- 수명 단계 / 나이 ---- */
 const ST=['baby','infant','toddler','child','teen','young_adult','adult','elder','ghost'],KO=['아기','영아','유아','어린이','청소년','청년','중년','노년','유령'];
 const DEF={baby:3,infant:3,toddler:5,child:7,teen:7,young_adult:14,adult:14,elder:14,ghost:14};
