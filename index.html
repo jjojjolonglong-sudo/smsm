@@ -204,7 +204,7 @@ const lt=D.lifetime.find(l=>l.play==P.id)||{};
 return`<div class=bar><button data-a=editplay>수정</button><button data-a=endplay>${P.end_date?'재개':'완료 처리'}</button></div>
 <p><b>${E(P.goal||'(목표 없음)')}</b><br><span class=mut>${P.type} · ${P.start_date||'?'} ~ ${P.end_date||'진행 중'}</span></p>
 <p class=mut>${ST.map((k,i)=>KO[i]+' '+(lt[k]??(k=='ghost'?'∞':'-'))).join(' · ')}</p><hr>
-<p>원본 폴더: ${FN?E(FN):'연결 안 됨'}</p><div class=bar>${Media.folder.supported?'<button data-a=dir>폴더 연결</button><button data-a=sync>원본 받아오기</button>':'<span class=mut>폴더 기능은 PC Chrome/Edge에서만 쓸 수 있어요</span>'}<span id=ss class=mut></span></div><hr><button data-a=logout>로그아웃</button>`}
+<p class=mut>원본 폴더 지정과 원본 받기는 mnmn의 '원본 폴더' 탭에서 해요.</p><hr><button data-a=logout>로그아웃</button>`}
 /* ---- 가계도: 직계 3촌(2촌까지 선명), 방계 4촌(3촌까지 선명), 배우자는 중심 심만 표시 ---- */
 function treeView(emb){const ss=sims();if(!ss.length)return'<p class=mut>심이 없어요</p>';
 const f0=byId('sim',emb||S.tf),fid=f0&&f0.play==S.play?f0.id:ss[0].id,FK=fid+'|0';if(!emb)S.tf=fid;
@@ -295,8 +295,6 @@ case'va':return viewAlb(byId('album',id));case'vx':$('#vw').close();return;
 case'tree':S.tf=id;break;
 case'x':$('#dg').close();return;
 case'rm':if(!confirm('삭제할까요?'))return;try{await RM();if($('#dg').open)$('#dg').close();S.ed=null;render()}catch(x){$('#er').textContent=x.message}return;
-case'dir':try{await Media.folder.connect();FN=await Media.folder.name()}catch(x){if(x.name!='AbortError')alert(x.message)}break;
-case'sync':{const o=$('#ss');try{o.textContent='받는 중…';const r=await Media.sync({onProgress:p=>o.textContent=p.done+'/'+p.total});o.textContent=r.total?`완료 ${r.done}/${r.total}`+(r.failed.length?` · 실패 ${r.failed.length}`:''):'대기 중인 원본 없음'}catch(x){o.textContent=x.message}return}
 case'logout':{const s=SES();setSES(null);try{s&&await fetch(`${SB}/auth/v1/logout`,{method:'POST',headers:{apikey:ANON,Authorization:'Bearer '+s.access_token}})}catch(x){}return boot()}}render()}catch(x){alert(x.message)}});
 /* ---- 시작 ---- */
 function loginView(){$('#app').innerHTML=`<form id=lf class=lg><h2 style="margin:0">smsm</h2><input id=em type=email placeholder="이메일" autocomplete=username><input id=pw type=password placeholder="비밀번호" autocomplete=current-password><button class=pri>로그인</button><p id=lm class=mut></p></form>`;
