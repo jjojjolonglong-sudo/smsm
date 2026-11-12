@@ -59,7 +59,8 @@ dialog h3{margin:0 0 6px}label{display:block;margin:10px 0 2px;color:var(--mut);
 </style></head><body>
 <div id="app"></div><dialog id="dg"></dialog><dialog id="vw"></dialog>
 <script src="https://jjojjolonglong-sudo.github.io/mnmn/config.js"></script>
-<script src="https://jjojjolonglong-sudo.github.io/mnmn/media.v2.js"></script>
+<script src="https://jjojjolonglong-sudo.github.io/mnmn/core.v1.js" data-app="smsm"></script>
+<script src="https://jjojjolonglong-sudo.github.io/mnmn/media.js"></script>
 <script>
 const CFG=window.APP_CONFIG||{};
 const SB=CFG.SB||'https://rtvvajhsnwkkrmncyfbs.supabase.co',ANON=CFG.ANON||'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0dnZhamhzbndra3JtbmN5ZmJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NjkwMTEsImV4cCI6MjEwNzA0NTAxMX0.O2aLLeazv_FhUhbVAkp4vz3pw8GPb_683dUu7Et1Cwk';
@@ -67,10 +68,10 @@ const SB=CFG.SB||'https://rtvvajhsnwkkrmncyfbs.supabase.co',ANON=CFG.ANON||'eyJh
 if(typeof window.todayKST!=='function'){window.kstDate=d=>new Date((d instanceof Date?d.getTime():+d)+32400000).toISOString().slice(0,10);window.todayKST=()=>window.kstDate(Date.now())}
 const TB={play:'smsm_play',lifetime:'smsm_lifetime',sim:'smsm_sim',rel:'smsm_relation',profile:'smsm_profile',album:'smsm_album'};
 const $=s=>document.querySelector(s),E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-/* media.v2.js 를 못 불러와도 앱이 죽지 않게 */
+/* media.js 를 못 불러와도 앱이 죽지 않게 */
 if(!window.Media){const f=async()=>{throw new Error('media.js를 불러오지 못했어요')};window.Media={init(){},url:()=>'',img:()=>'',newId:()=>crypto.randomUUID(),folder:{supported:false,name:async()=>''},save:f,sync:f}}
 /* ---- 로그인 / REST ---- */
-const SES=()=>{try{return JSON.parse(localStorage.getItem('smsm_sb')||'null')}catch(e){return null}},setSES=s=>{try{s?localStorage.setItem('smsm_sb',JSON.stringify(s)):localStorage.removeItem('smsm_sb')}catch(e){}};
+const SES=()=>{try{return JSON.parse(localStorage.getItem('jjojjo_ses')||'null')}catch(e){return null}},setSES=s=>{try{s?localStorage.setItem('jjojjo_ses',JSON.stringify(s)):localStorage.removeItem('jjojjo_ses')}catch(e){}};
 async function gotrue(g,b){const r=await fetch(`${SB}/auth/v1/token?grant_type=${g}`,{method:'POST',headers:{apikey:ANON,'Content-Type':'application/json'},body:JSON.stringify(b)}),j=await r.json();if(!r.ok)throw new Error(j.error_description||j.msg||j.error||'HTTP '+r.status);const s={access_token:j.access_token,refresh_token:j.refresh_token,expires_at:Date.now()+(j.expires_in||3600)*1000,user:{id:j.user&&j.user.id,email:j.user&&j.user.email}};setSES(s);return s}
 let rfp=null;async function token(){let s=SES();if(!s)throw new Error('로그인이 필요해요');if(s.expires_at-Date.now()<60000){rfp=rfp||gotrue('refresh_token',{refresh_token:s.refresh_token}).finally(()=>rfp=null);s=await rfp}return s.access_token}
 Media.init({app:'smsm',getToken:token});
